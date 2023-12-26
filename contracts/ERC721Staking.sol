@@ -32,10 +32,8 @@ contract ERC721Staking is ERC721Holder, ReentrancyGuard, Ownable {
     mapping(address => uint256[]) private tokensStaked;
     mapping(uint256 => uint256) public tokenIdToIndex;
 
-    /// @param _nftCollection the address of the ERC721 Contract
     /// @param _rewardToken the address of the ERC20 token used for rewards
-    constructor(address _nftCollection, address _rewardToken) {
-        nftCollection = IERC721(_nftCollection);
+    constructor(address _rewardToken) {
         rewardToken = IERC20(_rewardToken);
     }
 
@@ -131,7 +129,7 @@ contract ERC721Staking is ERC721Holder, ReentrancyGuard, Ownable {
     /// @param _duration the duration in with the rewards will be distributed, in seconds
     /// @dev  the Staking Contract have to already own enough Rewards Tokens to distribute all the rewards,
     /// so make sure to send all the tokens to the contract before calling this function
-    function startStakingPeriod(uint256 _amount, uint256 _duration) external onlyOwner {
+    function startStakingPeriod(uint256 _amount, uint256 _duration, address _nftCollection) external onlyOwner {
         require(_amount > 0, "Staking: Amount must be greater than 0");
         require(_duration > 0, "Staking: Duration must be greater than 0");
         require(
@@ -146,6 +144,10 @@ contract ERC721Staking is ERC721Holder, ReentrancyGuard, Ownable {
         rewardRate = _amount / rewardsDuration;
 
         uint256 balance = rewardToken.balanceOf(address(this));
+
+        nftCollection = IERC721(_nftCollection);
+        emit NftCollectionUpdated(_nftCollection);
+
         require(rewardRate <= balance / rewardsDuration, "Staking: Provided reward too high");
 
         lastUpdateTime = block.timestamp;
@@ -199,4 +201,5 @@ contract ERC721Staking is ERC721Holder, ReentrancyGuard, Ownable {
     event Withdrawn(address indexed user, uint256[] tokenIds);
     event RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
+    event NftCollectionUpdated(address newCollection);
 }
